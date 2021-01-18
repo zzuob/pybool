@@ -3,6 +3,10 @@ I keep spending 30 mins on a question that should take 3 mins and now it takes 3
 
 ## Description
 Boolean algebra functionality like SOP from minterms, truth tables etc.
+- Get SOP/POS from list of minterms(optional don't cares)
+- Get SOP/POS from expression
+- Give SOP/POS gate input cost
+- Output Prime Implicants/Truth Tables
 
 
 ## Prerequisites
