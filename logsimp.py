@@ -5,6 +5,7 @@ global A, B, C, D, E, F, G, H, var_list
 A, B, C, D, E, F, G, H = symbols('A B C D E F G H')
 var_list = [A, B, C, D, E, F, G, H]
 # if you have more than 8 variables do not
+# just see what tt_out looks like
 
 def tt_out(expr):
     """
@@ -111,27 +112,40 @@ def logic_in():
 
     return int(var_no), minterms, dontcares
 
+def prime_out(v, mt):
+    """
+    For a given variable number and decimal minterms, will output
+    the prime implicants of the expression.
+
+    :param v: integer, number of variables in expression
+    :param mt: iterable, list of decimal minterm values
+    :return: str, all minterms with their corresponding variables
+    """
+    out_block=''
+    for t in range(len(mt)):
+        # for each minterm
+        term = mt[t]
+        out_str = 'P' + str(term + 1) + ': ' #add P no.
+        value = str(bin(term)) # convert decimal to binary
+        value = value.split('b') # i.e. 0bxxxxx, remove '0b'
+        zeroes = v - len(value[1]) # how many bits are missing?
+        byte = ''
+        for bit in range(zeroes):
+            byte = byte + '0'
+        byte = byte + value[1] # add any missing bits back
+        for i in range(v):
+            if byte[i] == '0': # a zero => NOT variable
+                out_str = out_str + '~'
+            out_str = out_str + str(var_list[i]) + ' '
+        out_block = out_block + out_str + '\n'
+    return out_block
+
 def min_in():
-    # wrapper for min_in
     v, mt, dc = logic_in()
     SOP, POS = derive_logic(v, mt, dc)
-    disp_flag = yn_input('Display minterms in full? [y/n]\n')
+    disp_flag = yn_input('Prime implicants in full? [y/n]\n')
     if disp_flag == 'y':
-        for t in range(len(mt)):
-            term = mt[t]
-            out_str = 'P' + str(term + 1) + ': '
-            value = str(bin(term))
-            value = value.split('b')
-            zeroes = v - len(value[1])
-            byte = ''
-            for bit in range(zeroes):
-                byte = byte + '0'
-            byte = byte + value[1]
-            for i in range(v):
-                if byte[i] == '0':
-                    out_str = out_str + '~'
-                out_str = out_str + str(var_list[i]) + ' '
-            print(out_str)
+        print(prime_out(v, mt))
     return SOP, POS
 
 def bool_in():
