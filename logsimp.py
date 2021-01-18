@@ -1,11 +1,29 @@
-from sympy import *
+from sympy import symbols, sympify
+from sympy.logic import simplify_logic, POSform, SOPform
 from itertools import product
 
 global A, B, C, D, E, F, G, H, var_list
 A, B, C, D, E, F, G, H = symbols('A B C D E F G H')
 var_list = [A, B, C, D, E, F, G, H]
+# TODO improve this
 # if you have more than 8 variables do not
 # just see what tt_out looks like
+
+def gic(function,not_cost=False):
+    """
+    Counts all the gate inputs for a SymPy bool expression.
+
+    :param function: SymPy boolean expression
+    :param not_cost: boolean, are do NOT operators have gic associated?
+    :return: integer, count of all gate inputs in expression
+    """
+    cost = 0
+    expr = str(function) # be string for counting
+    for char in expr:
+        if char == '(' or char.isalpha() or (not_cost and char=='~'):
+            cost += 1
+    return cost
+
 
 def tt_out(expr):
     """
@@ -27,32 +45,18 @@ def tt_out(expr):
         print(' '.join(str(v) for v in values), ':', ((str(eval(code, env))).replace('True', '1')).replace('False', '0'))
 
 
-def gic(function,not_cost=False):
+def bool_parse(expr):
     """
-    Counts all the gate inputs for a SymPy bool expression.
+    Simplify SymPy bool expression from user input.
+    AND = &, OR = |, NOT = ~
+    Bracket your ANDs plz
 
-    :param function: SymPy boolean expression
-    :param not_cost: boolean, are do NOT operators have gic associated?
-    :return: integer, count of all gate inputs in expression
+    :return: tuple, contains 2 SymPy bool expressions for POS & SOP
     """
-    cost = 0
-    expr = str(function) # be string for counting
-    for char in expr:
-        if char == '(' or char.isalpha() or (not_cost and char=='~'):
-            cost += 1
-    return cost
-
-def yn_input(msg):
-    """
-    Force user to type y or n (not case sensitive).
-
-    :param msg: str, input message
-    :return: str, only 'y' or 'n'
-    """
-    y_n = 'None'
-    while y_n not in 'yn':
-        y_n = (input(msg)).lower()
-    return y_n
+    f = sympify((expr),evaluate=False, locals={'E': E})
+    SOP = simplify_logic(f,form='dnf')
+    POS = simplify_logic(f,form='cnf')
+    return SOP, POS
 
 def derive_logic(var_no,minterms,dontcares):
     """
@@ -69,48 +73,9 @@ def derive_logic(var_no,minterms,dontcares):
         sop = SOPform(v_vars, minterms)
         pos = POSform(v_vars, minterms)
     else:
-        sop=SOPform(v_vars,minterms,dontcares)
-        pos=POSform(v_vars,minterms,dontcares)
+        sop = SOPform(v_vars,minterms,dontcares)
+        pos = POSform(v_vars,minterms,dontcares)
     return sop, pos
-
-
-def logic_in():
-    """
-    Verify and parse user input for use in SymPy.
-    """
-    def multi_in(msg):
-        """
-        Force user to only input comma separated integers.
-
-        :param msg: str, input message
-        :return: list of integer values
-        """
-        invalid = True
-        while invalid:
-            out_terms = []
-            terms = (input(msg)).replace(' ', '')  # white spaces are forbidden
-            invalid = False
-            terms = terms.split(',')
-            for term in terms:
-                if not term.isnumeric():
-                    invalid = True  # thats not an integer try again
-                else:
-                    out_terms.append(int(term))
-        return out_terms
-    while True:
-        var_no = input('Enter number of variables:\n')
-        if var_no.isnumeric():
-            if 0 < int(var_no) <= 8:
-                break
-        print('Enter a valid number between 1 and 8')
-    minterms = multi_in('Enter comma separated minterms:\n')
-    dc_flag=yn_input('Are there any don\'t care values? [y/n]\n')
-    if dc_flag == 'n':
-        dontcares=None
-    else:
-        dontcares=multi_in('Enter comma separated don\'t cares:\n')
-
-    return int(var_no), minterms, dontcares
 
 def prime_out(v, mt):
     """
@@ -125,7 +90,7 @@ def prime_out(v, mt):
     for t in range(len(mt)):
         # for each minterm
         term = mt[t]
-        out_str = 'P' + str(term + 1) + ': ' #add P no.
+        out_str = 'P' + str(term) + ': ' #add P no.
         value = str(bin(term)) # convert decimal to binary
         value = value.split('b') # i.e. 0bxxxxx, remove '0b'
         zeroes = v - len(value[1]) # how many bits are missing?
@@ -139,32 +104,4 @@ def prime_out(v, mt):
             out_str = out_str + str(var_list[i]) + ' '
         out_block = out_block + out_str + '\n'
     return out_block
-
-def min_in():
-    v, mt, dc = logic_in()
-    SOP, POS = derive_logic(v, mt, dc)
-    disp_flag = yn_input('Prime implicants in full? [y/n]\n')
-    if disp_flag == 'y':
-        print(prime_out(v, mt))
-    return SOP, POS
-
-def bool_in():
-    """
-    Simplify SymPy bool expression from user input.
-    AND = &, OR = |, NOT = ~
-    Bracket your ANDs plz
-
-    :return: tuple, contains 2 SymPy bool expressions for POS & SOP
-    """
-    while True:
-        try:
-            f = parse_expr((input('Input boolean expression:\n')),evaluate=False)
-            SOP = to_dnf(f,simplify=True)
-            POS = to_cnf(f, simplify=True)
-            break
-        except:
-            pass
-
-    return SOP, POS
-
 

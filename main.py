@@ -1,4 +1,5 @@
-from logsimp import yn_input, min_in, bool_in, gic, tt_out
+from input_wrap import yn_input, min_in, bool_in
+from logsimp import gic, tt_out
 
 if __name__ == "__main__":
     input_type=yn_input('Define expression with minterms? [y/n]\n')
