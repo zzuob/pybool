@@ -25,44 +25,6 @@ def tt_out(expr):
         # make Trues => 1 and Falses => 0
         print(' '.join(str(v) for v in values), ':', ((str(eval(code, env))).replace('True', '1')).replace('False', '0'))
 
-def derive_logic(var_no,minterms,dontcares):
-    """
-    Create SymPy bool expressions for SOP and POS for a given
-    variable no., minterms and optional don't cares.
-
-    :param var_no: integer, number of variables
-    :param minterms: see Sympy.SOPform for formats allowed
-    :param dontcares: as above
-    :return: tuple, contains 2 SymPy bool expressions for POS & SOP
-    """
-    v_vars = var_list[:var_no]
-    if dontcares is None:
-        sop = SOPform(v_vars, minterms)
-        pos = POSform(v_vars, minterms)
-    else:
-        sop=SOPform(v_vars,minterms,dontcares)
-        pos=POSform(v_vars,minterms,dontcares)
-    return sop, pos
-
-def multi_in(msg):
-    """
-    Force user to only input comma separated integers.
-
-    :param msg: str, input message
-    :return: list of integer values
-    """
-    invalid = True
-    while invalid:
-        out_terms = []
-        terms = (input(msg)).replace(' ', '') # white spaces are forbidden
-        invalid = False
-        terms = terms.split(',')
-        for term in terms:
-            if not term.isnumeric():
-                invalid = True # thats not an integer try again
-            else:
-                out_terms.append(int(term))
-    return out_terms
 
 def gic(function,not_cost=False):
     """
@@ -91,8 +53,49 @@ def yn_input(msg):
         y_n = (input(msg)).lower()
     return y_n
 
+def derive_logic(var_no,minterms,dontcares):
+    """
+    Create SymPy bool expressions for SOP and POS for a given
+    variable no., minterms and optional don't cares.
+
+    :param var_no: integer, number of variables
+    :param minterms: see Sympy.SOPform for formats allowed
+    :param dontcares: as above
+    :return: tuple, contains 2 SymPy bool expressions for POS & SOP
+    """
+    v_vars = var_list[:var_no]
+    if dontcares is None:
+        sop = SOPform(v_vars, minterms)
+        pos = POSform(v_vars, minterms)
+    else:
+        sop=SOPform(v_vars,minterms,dontcares)
+        pos=POSform(v_vars,minterms,dontcares)
+    return sop, pos
+
+
 def logic_in():
-    # wrapper for derive_logic FIXME
+    """
+    Verify and parse user input for use in SymPy.
+    """
+    def multi_in(msg):
+        """
+        Force user to only input comma separated integers.
+
+        :param msg: str, input message
+        :return: list of integer values
+        """
+        invalid = True
+        while invalid:
+            out_terms = []
+            terms = (input(msg)).replace(' ', '')  # white spaces are forbidden
+            invalid = False
+            terms = terms.split(',')
+            for term in terms:
+                if not term.isnumeric():
+                    invalid = True  # thats not an integer try again
+                else:
+                    out_terms.append(int(term))
+        return out_terms
     while True:
         var_no = input('Enter number of variables:\n')
         if var_no.isnumeric():
@@ -112,7 +115,6 @@ def min_in():
     # wrapper for min_in
     v, mt, dc = logic_in()
     SOP, POS = derive_logic(v, mt, dc)
-    # FIXME this should really be it's own function
     disp_flag = yn_input('Display minterms in full? [y/n]\n')
     if disp_flag == 'y':
         for t in range(len(mt)):
@@ -140,22 +142,15 @@ def bool_in():
 
     :return: tuple, contains 2 SymPy bool expressions for POS & SOP
     """
-    # FIXME add exception handling
-    f = parse_expr((input('Input boolean expression:\n')),evaluate=False)
-    SOP = to_dnf(f,simplify=True)
-    POS = to_cnf(f, simplify=True)
+    while True:
+        try:
+            f = parse_expr((input('Input boolean expression:\n')),evaluate=False)
+            SOP = to_dnf(f,simplify=True)
+            POS = to_cnf(f, simplify=True)
+            break
+        except:
+            pass
+
     return SOP, POS
 
-input_type=yn_input('Define expression with minterms? [y/n]\n')
-if input_type == 'y':
-    SOP, POS = min_in()
-else:
-    SOP, POS = bool_in()
-
-print('SOP is {0} with cost = {1} gi'.format(SOP, gic(SOP)))
-print('POS is {0} with cost = {1} gi'.format(POS, gic(POS)))
-
-input_type=yn_input('Show truth table? [y/n]\n')
-if input_type == 'y':
-    tt_out(str(SOP))
 
