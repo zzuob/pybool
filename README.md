@@ -1,5 +1,5 @@
-# pyEEEtools
-I keep spending 30 mins on a question that should take 3 mins and now it takes 3 seconds.
+# pybool
+Helper for boolean alegbra in electronics.
 
 ## Description
 Boolean algebra functionality like SOP from minterms, truth tables etc.
